@@ -1,0 +1,72 @@
+{
+  "stream": {
+    "inputFields": [
+      {
+        "name": "vendor",
+        "label": "Vendor",
+        "type": "text",
+        "validations": []
+      },
+      {
+        "name": "code",
+        "label": "Code",
+        "type": "text",
+        "validations": []
+      },
+      {
+        "name": "vendor_date",
+        "label": "Market Date",
+        "type": "datetime-local",
+        "validations": []
+      }
+    ]
+  },
+  "table": {
+    "inputFields": [
+      {
+        "name": "start",
+        "label": "Start time",
+        "type": "date",
+        "validations": []
+      },
+      {
+        "name": "end",
+        "label": "End time",
+        "type": "date",
+        "validations": []
+      }
+    ],
+    "tableColumns": [
+      {
+        "name": "start",
+        "label": "Start time",
+        "type": "date"
+      },
+      {
+        "name": "end",
+        "label": "End time",
+        "type": "date"
+      },
+      {
+        "name": "count",
+        "label": "Count",
+        "type": "text"
+      },
+      {
+        "name": "vendor",
+        "label": "Vendor",
+        "type": "text"
+      },
+      {
+        "name": "vendor_date",
+        "label": "Market Date",
+        "type": "date"
+      },
+      {
+        "name": "code",
+        "label": "Code",
+        "type": "text"
+      }
+    ]
+  }
+}

@@ -1,0 +1,864 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  name       String
+  teamId     String
+  hashedKey  String    @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  team       Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+}
+
+model Invitation {
+  id             String   @id @default(uuid())
+  teamId         String
+  email          String?
+  role           Role     @default(MEMBER)
+  token          String   @unique
+  expires        DateTime
+  invitedBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  allowedDomains String[] @default([])
+  sentViaEmail   Boolean  @default(true)
+  user           User     @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, email])
+  @@index([email])
+}
+
+model License {
+  id                String             @id @default(uuid())
+  name              String
+  description       String?
+  price             Float
+  type              String
+  metadata          Json
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now())
+  teamId            String
+  userLocationId    String?
+  features          String[]
+  maxLocations      Int?
+  maxUsers          Int?
+  vmIPAddress       String?
+  status            LicenseStatus      @default(ACTIVE)
+  renewalPeriod     RenewalPeriod
+  licenseTypeId     String?
+  LicenseType       LicenseType?       @relation(fields: [licenseTypeId], references: [id])
+  team              Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  purchasedLicenses PurchasedLicense[]
+
+  @@index([teamId])
+  @@index([status])
+  @@index([licenseTypeId])
+}
+
+model PurchasedLicense {
+  id              String            @id @default(uuid())
+  teamId          String
+  licenseId       String
+  purchasedAt     DateTime          @default(now())
+  expiresAt       DateTime?
+  metadata        Json?
+  isActive        Boolean           @default(true)
+  lastRenewalDate DateTime?
+  nextRenewalDate DateTime?
+  notes           String?
+  locationLicense LocationLicense[]
+  License         License           @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  Team            Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userLicense     UserLicense[]
+
+  @@index([teamId])
+  @@index([licenseId])
+  @@index([expiresAt])
+  @@index([isActive])
+}
+
+model LocationLicense {
+  id                 String           @id @default(uuid())
+  locationId         String
+  purchasedLicenseId String
+  assignedAt         DateTime         @default(now())
+  expiresAt          DateTime?
+  isActive           Boolean          @default(true)
+  location           Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  purchasedLicense   PurchasedLicense @relation(fields: [purchasedLicenseId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, purchasedLicenseId])
+  @@index([locationId])
+  @@index([purchasedLicenseId])
+}
+
+model Location {
+  id              String            @id @default(uuid())
+  name            String
+  teamId          String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now())
+  addressL1       String
+  addressL2       String?
+  city            String
+  email           String?
+  phone           String
+  state           String
+  zip             String
+  Animal          Animal[]
+  Team            Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  LocationLicense LocationLicense[]
+  UserLocation    UserLocation[]
+  Zone            Zone[]
+  locationVendors LocationVendor[]  @relation
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  description String
+  features    String[]
+  image       String
+  name        String
+  created     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  Price       Price[]
+}
+
+model Price {
+  id            String   @id @default(uuid())
+  billingScheme String
+  currency      String
+  serviceId     String
+  amount        Int?
+  metadata      Json
+  type          String
+  created       DateTime
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id           String   @id
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Subscription {
+  id         String    @id
+  customerId String
+  priceId    String
+  active     Boolean   @default(false)
+  startDate  DateTime
+  endDate    DateTime
+  cancelAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now())
+
+  @@index([customerId])
+}
+
+model Team {
+  id                 String               @id @default(uuid())
+  name               String
+  slug               String               @unique
+  domain             String?              @unique
+  defaultRole        Role                 @default(MEMBER)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now())
+  billingId          String?
+  billingProvider    String?
+  tenantTypeId       String?
+  useVendors         Boolean              @default(false)
+  apiKeys            ApiKey[]
+  invitations        Invitation[]
+  availableLicenses  License[]
+  locations          Location[]
+  Notification       Notification[]
+  purchasedLicenses  PurchasedLicense[]
+  reports            Report[]
+  TenantType         TenantType?          @relation(fields: [tenantTypeId], references: [id])
+  members            TeamMember[]
+  teamPPEItem        TeamPPEItem[]
+  teamRoles          TeamRole[]
+  theme              Theme?
+  Webhooks           Webhook[]
+  teamLivestockItem  TeamLivestockItem[]
+  LivestockDetection LivestockDetection[]
+  complianceStatuses TeamComplianceStatus[]
+
+  @@index([billingId])
+  @@index([tenantTypeId])
+}
+
+model TeamMember {
+  id         String    @id @default(uuid())
+  teamId     String
+  userId     String
+  role       Role      @default(MEMBER)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now())
+  teamRoleId String
+  team       Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamRole   TeamRole  @relation(fields: [teamRoleId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Webhooks   Webhook[]
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model User {
+  id                     String             @id @default(uuid())
+  name                   String
+  email                  String             @unique
+  emailVerified          DateTime?
+  password               String?
+  image                  String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @default(now())
+  invalid_login_attempts Int                @default(0)
+  lockedAt               DateTime?
+  firstName              String
+  lastName               String             @default("")
+  phone                  String             @default("")
+  Account                Account[]
+  Invitation             Invitation[]
+  notificationsRead      NotificationRead[]
+  reportDownloads        ReportDownload[]
+  Session                Session[]
+  TeamMember             TeamMember[]
+  UserLicense            UserLicense[]
+  UserLocation           UserLocation[]
+  Notification           Notification[]     @relation("NotificationToUser")
+}
+
+model UserLicense {
+  id                 String           @id @default(uuid())
+  userId             String
+  assignedAt         DateTime         @default(now())
+  expiresAt          DateTime?
+  purchasedLicenseId String
+  license            PurchasedLicense @relation(fields: [purchasedLicenseId], references: [id], onDelete: Cascade)
+  User               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, purchasedLicenseId])
+  @@index([purchasedLicenseId])
+  @@index([userId])
+}
+
+model UserLocation {
+  id         String   @id @default(uuid())
+  userId     String
+  locationId String
+  assignedAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+  Location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, locationId])
+  @@index([locationId])
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model jackson_store {
+  key           String          @id(map: "_jackson_store_key") @db.VarChar(1500)
+  value         String
+  iv            String?         @db.VarChar(64)
+  tag           String?         @db.VarChar(64)
+  createdAt     DateTime        @default(now()) @db.Timestamp(6)
+  modifiedAt    DateTime?       @db.Timestamp(6)
+  namespace     String?         @db.VarChar(256)
+  jackson_index jackson_index[]
+
+  @@index([namespace], map: "_jackson_store_namespace")
+  @@ignore
+}
+
+model jackson_index {
+  id       Int           @id(map: "_jackson_index_id") @default(autoincrement())
+  key      String        @db.VarChar(1500)
+  storeKey String        @db.VarChar(1500)
+  store    jackson_store @relation(fields: [storeKey], references: [key], onDelete: Cascade, onUpdate: NoAction, map: "FK_937b040fb2592b4671cbde09e83")
+
+  @@index([key], map: "_jackson_index_key")
+  @@index([key, storeKey], map: "_jackson_index_key_store")
+  @@ignore
+}
+
+model jackson_ttl {
+  key       String @id(map: "jackson_ttl_key") @db.VarChar(1500)
+  expiresAt BigInt
+
+  @@index([expiresAt], map: "_jackson_ttl_expires_at")
+  @@ignore
+}
+
+model Animal {
+  id             String   @id @default(uuid())
+  name           String
+  icon           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  locationId     String
+  activeAnimal   Int      @default(0)
+  inactiveAnimal Int      @default(0)
+  Location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([locationId])
+}
+
+model Livestock {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  icon        String? // Icon path
+  description String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  teamItems   TeamLivestockItem[]
+  vendorItems VendorLivestock[] // Vendors associated with this livestock
+}
+
+model TeamLivestockItem {
+  id          String    @id @default(uuid())
+  teamId      String
+  livestockId String
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  livestock   Livestock @relation(fields: [livestockId], references: [id], onDelete: Cascade)
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, livestockId])
+  @@index([teamId])
+  @@index([livestockId])
+}
+
+model TeamRole {
+  id          String           @id @default(uuid())
+  name        String
+  teamId      String
+  permissions RolePermission[]
+  teamMembers TeamMember[]
+  team        Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+}
+
+model RolePermission {
+  id         Int      @id @default(autoincrement())
+  resource   Resource
+  teamRoleId String
+  action     Int      @default(0)
+  role       TeamRole @relation(fields: [teamRoleId], references: [id], onDelete: Cascade)
+
+  @@index([teamRoleId])
+}
+
+model Theme {
+  primaryColor   String  @default("#16355D")
+  secondaryColor String  @default("#BA2025")
+  logo           String?
+  teamId         String  @unique
+  id             Int     @id @default(autoincrement())
+  team           Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model TenantType {
+  id          String   @id
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  Team        Team[]
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  type      String
+  message   String
+  title     String?
+  teamId    String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  expiresAt DateTime?
+  isGlobal  Boolean            @default(false)
+  metadata  Json?
+  status    String             @default("ACTIVE")
+  team      Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  readBy    NotificationRead[]
+  User      User[]             @relation("NotificationToUser")
+
+  @@index([teamId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model NotificationRead {
+  id             String       @id @default(uuid())
+  notificationId String
+  userId         String
+  readAt         DateTime     @default(now())
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([notificationId])
+  @@index([userId])
+}
+
+model LicenseType {
+  id             String    @id
+  name           String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  description    String?
+  metadataSchema Json?
+  License        License[]
+}
+
+model Zone {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  locationId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  devices     Device[]
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, name])
+  @@index([locationId])
+}
+
+model Device {
+  id              String        @id @default(uuid())
+  name            String
+  deviceType      DeviceType
+  serialNumber    String?
+  model           String?
+  manufacturer    String?
+  ipAddress       String?
+  macAddress      String?
+  firmwareVersion String?
+  status          DeviceStatus  @default(OFFLINE)
+  zoneId          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+  lastPing        DateTime?
+  config          Json?
+  zone            Zone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  ppeItems        DevicePPE[]
+  filterDevice    FilterDevice?
+
+  @@index([zoneId])
+  @@index([status])
+  @@index([deviceType])
+}
+
+model FilterDevice {
+  id                 String               @id @default(uuid())
+  filterId           String               @unique
+  deviceId           String               @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  device             Device               @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  compliance         PPECompliance[]
+  LivestockDetection LivestockDetection[]
+
+  @@index([filterId])
+}
+
+model PPECompliance {
+  id                 String           @id @default(uuid())
+  workerId           String
+  filterId           String
+  timestamp          DateTime
+  compliances        Json?
+  imageUrl           String?          // Added optional image URL for the detection
+  severity           Severity         @default(NOT_SET)  
+  statusId           String?          // Changed from enum to string reference
+  comments           Json?            // Add comments field to store comments history as JSON
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  filterDevice       FilterDevice     @relation(fields: [filterId], references: [filterId], onDelete: Cascade)
+  complianceStatus   TeamComplianceStatus? @relation(fields: [statusId], references: [id], onDelete: SetNull)
+
+  @@index([workerId])
+  @@index([filterId])
+  @@index([timestamp])
+  @@index([statusId])
+}
+
+model TeamComplianceStatus {
+  id           String          @id @default(uuid())
+  name         String          // Display name like "Pending", "Resolved", etc.
+  code         String          // System name (uppercase, no spaces)
+  description  String?
+  color        String?         // Color code for UI display
+  icon         String?         // Icon name/path
+  isDefault    Boolean         @default(false) // Is this the default status?
+  order        Int             @default(0)     // For display ordering
+  teamId       String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  team         Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  compliances  PPECompliance[]
+
+  @@unique([teamId, code]) // Each team can have only one status with a specific code
+  @@index([teamId])
+}
+
+model DevicePPE {
+  id            String      @id @default(uuid())
+  deviceId      String
+  createdAt     DateTime    @default(now())
+  teamPPEItemId String
+  device        Device      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  teamPPEItem   TeamPPEItem @relation(fields: [teamPPEItemId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, teamPPEItemId])
+  @@index([deviceId])
+  @@index([teamPPEItemId])
+}
+
+model PPEItem {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  teamPPEItem TeamPPEItem[]
+}
+
+model TeamPPEItem {
+  id        String      @id @default(uuid())
+  teamId    String
+  ppeItemId String
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  devicePPE DevicePPE[]
+  ppeItem   PPEItem     @relation(fields: [ppeItemId], references: [id], onDelete: Cascade)
+  team      Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, ppeItemId])
+  @@index([teamId])
+  @@index([ppeItemId])
+}
+
+model Report {
+  id          String           @id @default(uuid())
+  title       String
+  description String?
+  teamId      String
+  type        ReportType       @default(COMPLIANCE_SUMMARY)
+  formats     ReportFormat[]   @default([PDF])
+  filePath    String?
+  fileSize    Int?
+  pages       Int              @default(1)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  generatedOn DateTime         @default(now())
+  team        Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  downloads   ReportDownload[]
+  parameters  ReportParameter?
+
+  @@index([teamId])
+  @@index([type])
+  @@index([generatedOn])
+}
+
+model ReportDownload {
+  id           String   @id @default(uuid())
+  reportId     String
+  userId       String
+  downloadedAt DateTime @default(now())
+  report       Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([userId])
+  @@index([downloadedAt])
+}
+
+model ReportParameter {
+  id         String   @id @default(uuid())
+  reportId   String   @unique
+  startDate  DateTime
+  endDate    DateTime
+  locationId String?
+  zoneId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model Webhook {
+  id           String      @id @default(uuid())
+  url          String
+  description  String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  eventTypes   EventType[]
+  teamId       String
+  teamMemberId String
+  teamMember   TeamMember  @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  team         Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([teamMemberId])
+}
+
+model Vendor {
+  id                 String               @id @default(uuid())
+  companyName        String
+  contactName        String
+  contactEmail       String
+  contactPhone       String
+  address            Json
+  active             Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  notes              String? // optional
+  locations          LocationVendor[]     @relation("VendorLocations")
+  livestockItems     VendorLivestock[]
+  LivestockDetection LivestockDetection[]
+}
+
+model VendorLivestock {
+  id          String   @id @default(uuid())
+  vendorId    String
+  livestockId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  active      Boolean  @default(true)
+
+  vendor    Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  livestock Livestock @relation(fields: [livestockId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, livestockId])
+  @@index([vendorId])
+  @@index([livestockId])
+}
+
+enum EventType {
+  member_created
+  member_removed
+  invitation_created
+  inviation_removed
+  alerts_created
+}
+
+enum RenewalPeriod {
+  MONTHLY
+  QUARTERLY
+  SEMIANNUALLY
+  ANNUALLY
+  BIANNUALLY
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  PENDING
+}
+
+enum Action {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LEAVE
+}
+
+enum Resource {
+  TEAM
+  TEAM_MEMBER
+  TEAM_INVITATION
+  TEAM_SSO
+  TEAM_DSYNC
+  TEAM_AUDIT_LOG
+  TEAM_WEBHOOK
+  TEAM_PAYMENTS
+  TEAM_LICENSES
+  TEAM_API_KEY
+  LOCATION
+  LICENSE
+  ALL
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  MEMBER
+}
+
+enum NotificationStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  ARCHIVED
+  DELETED
+}
+
+enum NotificationType {
+  SUCCESS
+  ERROR
+  WARNING
+  INFO
+}
+
+enum NotificationPosition {
+  TOP_RIGHT
+  TOP_LEFT
+  BOTTOM_RIGHT
+  BOTTOM_LEFT
+  TOP_CENTER
+  BOTTOM_CENTER
+}
+
+enum DigestFrequency {
+  NEVER
+  HOURLY
+  DAILY
+  WEEKLY
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+  ERROR
+}
+
+enum DeviceType {
+  CAMERA
+  SENSOR
+  ACCESS_CONTROL
+  OTHER
+}
+
+enum ReportType {
+  COMPLIANCE_SUMMARY
+  VIOLATION_TREND
+  REPEAT_OFFENDERS_ANALYSIS
+  ZONE_LOCATION_ANALYSIS
+}
+
+enum ReportFormat {
+  PDF
+  EXCEL
+  CSV
+}
+
+model LocationVendor {
+  id         String   @id @default(uuid())
+  locationId String
+  vendorId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  active     Boolean  @default(true)
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  vendor   Vendor   @relation("VendorLocations", fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, vendorId])
+  @@index([locationId])
+  @@index([vendorId])
+}
+
+model LivestockDetection {
+  id                String             @id @default(uuid())
+  vendorId          String
+  teamId            String
+  filterId          String
+  timestamp         DateTime
+  filterRunTimeMs   Int
+  type              String
+  count             Int
+  manualCount       Int?               // Added manual count field as nullable integer
+  averageConfidence Float
+  status            DetectionStatus    @default(PENDING) // Added status enum with default value
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  team         Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  vendor       Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  filterDevice FilterDevice @relation(fields: [filterId], references: [filterId], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([vendorId])
+  @@index([filterId])
+  @@index([timestamp])
+  @@index([type])
+  @@index([status])
+}
+
+enum DetectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  MODIFIED
+}
+
+enum Severity {
+  NOT_SET
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}

@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@200;400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark light;
+  --background-color: #f6f7f9; /* Light theme background color */
+  --text-color: #4f5d74; /* Light theme text color */
+  --surface-color: #f5f5f5; /* Light theme surface color */
+  --border-color: #e0e0e0; /* Light theme border color */
+  --shadow-color: rgba(0, 0, 0, 0.2); /* Light theme shadow color */
+  --disabled-text-color: #9e9e9e; /* Light theme disabled text color */
+  --hover-color: #f6f7f9; /* Light theme hover color */
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family:
+    'Poppins',
+    'Montserrat',
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
+  background-color: #f6f6fa;
+}
+
+.dark {
+  --background-color: #121212;
+  --text-color: #fff0f0;
+  --surface-color: #1e1e1e;
+  --border-color: #333333;
+  --shadow-color: #000000;
+  --disabled-text-color: #666666;
+  --hover-color: #000;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer base {
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: white !important;
+    background-color: white !important;
+  }
+
+  input[type='checkbox']:not(:checked):not(:disabled),
+  input[type='radio']:not(:checked):not(:disabled) {
+    accent-color: white !important;
+    background-color: white !important;
+  }
+}
+
+@layer base {
+  /* Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Firefox */
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  #__next {
+    @apply h-full;
+  }
+
+  .btn {
+    @apply rounded normal-case;
+  }
+
+  .modal-box {
+    @apply rounded;
+  }
+
+  .btn-primary:focus-visible {
+    @apply outline-primary;
+  }
+
+  .btn-error:focus-visible {
+    @apply outline-error;
+  }
+}
+
+.btn-md {
+  @apply min-h-8 h-10;
+}
+
+.scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #555555 #f0f0f0;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background-color: #555555;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background-color: #f0f0f0;
+}
+
+.scrollbar::-webkit-scrollbar-button {
+  display: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer-effect {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Dark mode shimmer */
+.dark .shimmer-effect {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.05) 40%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+}
