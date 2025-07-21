@@ -1,6 +1,7 @@
 import type { SessionStrategy } from 'next-auth';
 
 const env = {
+  hideLandingPage: false,
   databaseUrl: `${process.env.DATABASE_URL}`,
   appUrl: `${process.env.APP_URL}`,
   redirectIfAuthenticated: '/dashboard',
@@ -88,8 +89,8 @@ const env = {
     prefix: process.env.OTEL_PREFIX || 'boxyhq.saas',
   },
 
-  hideLandingPage: process.env.HIDE_LANDING_PAGE === 'true',
-
+  // hideLandingPage: process.env.HIDE_LANDING_PAGE === 'true' || false,
+  // hideLandingPage: false, 
   darkModeEnabled: process.env.NEXT_PUBLIC_DARK_MODE !== 'false',
 
   teamFeatures: {

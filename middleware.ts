@@ -7,6 +7,8 @@ import env from './lib/env';
 
 // Add routes that don't require authentication
 const unAuthenticatedRoutes = [
+  '/',
+  '/about*',
   '/api/hello',
   '/api/health',
   '/api/auth/**',
@@ -25,7 +27,7 @@ const unAuthenticatedRoutes = [
 
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
+  console.log('MIDDLEWARE HIT:', pathname);
   // Bypass routes that don't require authentication
   if (micromatch.isMatch(pathname, unAuthenticatedRoutes)) {
     return NextResponse.next();
@@ -68,5 +70,9 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth/session).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth/session|products/farm.jpeg|products/ppe.jpg|products/visual-inspection.jpg|/about|World-Map.svg|backgrounds/blob.svg).*)'],
 };
+
+// export const config = {
+//   matcher: ['/:path*'],
+// };

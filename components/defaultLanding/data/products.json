@@ -1,0 +1,17 @@
+[
+  {
+    "name": "PPE Compliance",
+    "description": "Ensure all safety protocols are followed on-site with real-time AI monitoring of PPE adherence across your workforce.",
+    "image": "/products/ppe.jpg"
+  },
+  {
+    "name": "Livestock Monitoring",
+    "description": "Monitor animal health, movement, and behavior using intelligent surveillance to improve farm productivity and wellbeing.",
+    "image": "/products/farm.jpeg"
+  },
+  {
+    "name": "Visual Inspection",
+    "description": "Automate product quality checks with AI-powered visual inspection for faster, more accurate defect detection.",
+    "image": "/products/visual-inspection.jpg"
+  }
+]

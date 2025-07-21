@@ -232,6 +232,8 @@ model Team {
 
   @@index([billingId])
   @@index([tenantTypeId])
+  Comment Comment[]
+  VisualInspection VisualInspection[]
 }
 
 model TeamMember {
@@ -856,6 +858,139 @@ enum DetectionStatus {
 }
 
 enum Severity {
+  NOT_SET
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+
+/*
+********************************************************************************************************
+************************************** VISUAL INSPECTION SCHEMA ****************************************
+********************************************************************************************************
+*/
+
+// add dynamic productType for each product 
+model ProductType {
+  id        String    @id @default(cuid())
+  name      String    
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  products  Product[]
+
+  BatchProductType BatchProductType[]
+}
+
+model Product {
+  id                String   @id @default(cuid())
+  name              String
+  productTypeId     String
+  productType       ProductType @relation(fields: [productTypeId], references: [id])
+  batchId           String?
+  batch             Batch? @relation(fields: [batchId], references: [id])
+
+}
+
+model Batch {
+  id                 String              @id @default(cuid())
+  // productCount: expected number of items in this batch, validated by cameras during VisualInspection
+  productCount       Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  status             BatchStatus
+  visualInspections  VisualInspection?
+  products           Product[]
+  BatchProductType   BatchProductType[]
+}
+
+model BatchProductType {
+  id            String       @id @default(uuid())
+  batchId       String
+  productTypeId String
+
+  batch         Batch        @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  productType   ProductType  @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, productTypeId])
+  @@index([batchId])
+  @@index([productTypeId])
+}
+
+enum BatchStatus {
+  SCHEDULED
+  IN_PRODUCTION
+  COMPLETED
+}
+
+model ProductionLine {
+  id                 String     @id @default(cuid())
+  name               String
+  downtime           Downtime?  @relation("Downtime")
+  visualInspections  VisualInspection[]
+}
+
+model Downtime {
+  id               String         @id @default(cuid())
+  startedAt        DateTime       @default(now())
+  duration         Int            // in minutes
+  description      String
+  productionLineId String         @unique
+  productionLine   ProductionLine @relation("Downtime", fields: [productionLineId], references: [id], onDelete: Cascade) // 👈 Add matching relation name
+}
+
+model VisualInspection {
+  id                  String              @id @default(cuid())
+  teamId              String
+  team                Team                @relation(fields: [teamId], references: [id])
+  batchId             String              @unique
+  batch               Batch               @relation(fields: [batchId], references: [id])
+  lineId              String
+  productionLine      ProductionLine      @relation(fields: [lineId], references: [id])
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  defectLog           Defect[]            // all defects found in this inspection
+  defectCount         Int
+  status              InspectionStatus
+}
+
+// could add ProductSubId to identify particular defected prods
+model Defect {
+  id                   String             @id @default(cuid())
+  visualInspectionId   String
+  visualInspection     VisualInspection   @relation(fields: [visualInspectionId], references: [id])
+  type                 String
+  severity             DefectSeverity
+  location             String
+  timestamp            DateTime           @default(now())
+  imageUrl             String?
+  comments             Comment[]
+  // filterId             String
+  // filterDevice         FilterDevice     @relation(fields: [filterId], references: [filterId], onDelete: Cascade)
+}
+
+// should be dynamic - 
+model Comment {
+  id          String    @id @default(cuid())
+  defectId    String
+  defect      Defect    @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  teamId      String?    // optional link to a User or team
+  team        Team?     @relation(fields: [teamId], references: [id])
+  text        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  imageURL    String?    // optional link to an image
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum DefectSeverity {
   NOT_SET
   LOW
   MEDIUM

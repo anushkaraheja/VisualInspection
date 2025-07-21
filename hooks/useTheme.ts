@@ -33,22 +33,10 @@ const useTheme = () => {
   const selectedTheme = themes.find((t) => t.id === theme) || themes[0];
 
   const toggleTheme = () => {
-    selectedTheme.id === 'light' ? setTheme('dark') : setTheme('light');
-
     if (selectedTheme.id === 'light') {
       setTheme('dark');
-      selectedTheme.id === 'light' ? setTheme('dark') : setTheme('light');
-
-      if (selectedTheme.id === 'light') {
-        // applyTheme('dark');
-        setTheme('dark');
-      } else if (selectedTheme.id === 'dark') {
-        // applyTheme('light');
-        setTheme('light');
-      } else if (selectedTheme.id === 'system') {
-        // applyTheme('dark');
-        setTheme('dark');
-      }
+    } else {
+      setTheme('light');
     }
   };
   return { theme, setTheme, selectedTheme, toggleTheme, themes };

@@ -34,6 +34,9 @@ export const DATA_VOLUME = {
   workersCount: 10, // Number of workers for PPE compliance data
   livestockCount: 3, // Number of livestock types for Farm tenant
   ppeItemsCount: 3, // Number of active PPE items for PPE tenant
+  productTypes: 5, // Number of product types for Visual Inspection
+  products: 20, // Number of products of each product type for Visual Inspection
+  productionLines: 5, // Number of production lines for Visual Inspection
 };
 
 // Time Range Configuration
