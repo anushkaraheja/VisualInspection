@@ -72,7 +72,7 @@
     "sequelize-cli": "^6.6.2",
     "sharp": "0.33.5",
     "slack-notify": "2.0.7",
-    "stripe": "17.4.0",
+    "stripe": "18.5.0",
     "svix": "1.42.0",
     "swr": "2.2.5",
     "yup": "1.4.0",
